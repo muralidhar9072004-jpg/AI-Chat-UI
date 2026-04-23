@@ -1,65 +1,182 @@
-import Image from "next/image";
+"use client";
+
+import { useState, useRef, useEffect } from "react";
 
 export default function Home() {
+  const [message, setMessage] = useState("");
+  const [messages, setMessages] = useState<{ sender: string; text: string }[]>([]);
+  const [loading, setLoading] = useState(false);
+  const bottomRef = useRef<HTMLDivElement | null>(null);
+  const [chatTitles, setChatTitles] = useState<string[]>([]);
+
+  // Auto scroll effect 
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({
+      behavior: "smooth",
+    });
+  }, [messages, loading]);
+
+  // Load history on mount
+  useEffect(() => {
+    const loadHistory = async () => {
+      try {
+        const res = await fetch("https://ai-chat-api-84vl.onrender.com/history/murali");
+        const data = await res.json();
+
+        const formatted = data.history.map((item: string) => {
+          if (item.startsWith("User:")) {
+            return {
+              sender: "user",
+              text: item.replace("User:", "").trim(),
+            };
+          }
+          return {
+            sender: "ai",
+            text: item.replace("Ai:", "").trim(),
+          };
+        });
+        setMessages(formatted);
+      } catch (err) {
+        console.error("Failed to load history:", err);
+      }
+    };
+    loadHistory();
+  }, []);
+
+  const sendMessage = async () => {
+    if (!message.trim()) return;
+
+    const userText = message;
+    if (messages.length === 0) {
+      const title = userText.split(" ").slice(0, 4).join(" ");
+      setChatTitles((prev) => [title, ...prev]);
+    }
+    setMessages((prev) => [
+      ...prev,
+      { sender: "user", text: userText },
+    ]);
+
+    setMessage("");
+    setLoading(true);
+
+    try {
+      const res = await fetch("https://ai-chat-api-84vl.onrender.com/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          userId: "murali",
+          message: userText
+        }),
+      });
+
+      const data = await res.json();
+      console.log("API Response:", data);
+      setMessages((prev) => [
+        ...prev,
+        { sender: "ai", text: data.reply || data.error || "AI unavailable now..." },
+      ]);
+    } catch (error) {
+      console.error("Chat API error:", error);
+      setMessages((prev) => [
+        ...prev,
+        { sender: "ai", text: "AI server busy, please try again" },
+      ]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const clearChat = async () => {
+    try {
+      await fetch("https://ai-chat-api-84vl.onrender.com/clear-chat/murali", {
+        method: "DELETE"
+      });
+      setMessages([]);
+    } catch (err) {
+      console.error("Failed to clear chat:", err);
+    }
+  };
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+    <main className="h-screen bg-gradient-to-br from-gray-100 to-gray-200 flex flex-col">
+      <div className="flex justify-between items-center px-6 py-4 border-b bg-white/90 backdrop-blur shadow-sm">
+        <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-gray-800">
+          AI Chat Assistant</h1>
+        <button
+          onClick={clearChat}
+          className="bg-black hover:bg-gray-800 text-white px-4 py-2 rounded-xl transition"
+        >
+          New Chat
+        </button>
+      </div>
+      <div className="max-w-6xl mx-auto w-full px-4 pt-3 space-y-2">
+        {chatTitles.map((title, index) => (
+          <div
+            key={index}
+            className="bg-white/80 border border-gray-200 px-4 py-2 rounded-xl text-sm text-gray-700 shadow-sm"
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+            {title}
+          </div >
+        ))}
+      </div>
+
+      <div className="flex-1 overflow-y-auto px-4 py-6 space-y-4 w-full max-w-6xl mx-auto">
+        {messages.map((msg, index) => (
+          <div
+            key={index}
+            className={`p-3 rounded-2xl shadow-sm max-w-[80%] transition-all ${msg.sender === "user"
+              ? "bg-blue-600 text-white ml-auto rounded-2xl"
+              : "bg-white text-gray-800 mr-auto border border-gray-200 rounded-2xl"
+              }`}
           >
-            Documentation
-          </a>
+            <p className="text-[15px] leading-7 whitespace-pre-wrap">{msg.text}</p>
+          </div>
+        ))}
+        {loading && (
+          <div className="bg-white border border-gray-200 text-gray-500 p-3 rounded-2xl rounded-tl-none w-fit animate-pulse flex items-center gap-2 shadow-sm">
+            <span className="flex gap-1">
+              <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce"></span>
+              <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce [animation-delay:0.2s]"></span>
+              <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce [animation-delay:0.4s]"></span>
+            </span>
+            AI is typing...
+          </div>
+        )}
+        <div ref={bottomRef} className="h-1"></div>
+      </div>
+
+      <div className="w-full border-t bg-white/90 backdrop-blur p-4 shadow-lg">
+        <div className="max-w-6xl mx-auto flex gap-2 items-end">
+
+          <textarea
+            className="flex-1 border border-gray-300 p-3 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 resize-none"
+            placeholder="Ask anything..."
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+              }
+            }}
+            rows={1}
+          ></textarea>
+
+          <button
+            onClick={sendMessage}
+            className={` rounded-2xl  px-7 py-3 font-semibold text-white font-medium transition ${loading
+              ? "bg-gray-400 cursor-not-allowed"
+              : "bg-blue-600 hover:bg-blue-700"
+              }`}
+            disabled={loading}
+          >
+            {loading ? "..." : "Send"}
+          </button>
+
         </div>
-      </main>
-    </div>
+      </div>
+    </main>
   );
 }
