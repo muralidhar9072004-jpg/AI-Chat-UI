@@ -21,7 +21,7 @@ export default function Home() {
   useEffect(() => {
     const loadHistory = async () => {
       try {
-        const res = await fetch(`https://ai-chat-api-84vl.onrender.com/history/${userId}`);
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/history/${userId}`);
         const data = await res.json();
 
         const formatted = data.history.map((item: string) => {
@@ -61,7 +61,7 @@ export default function Home() {
     setLoading(true);
 
     try {
-      const res = await fetch(`https://ai-chat-api-84vl.onrender.com/chat`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/chat`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
@@ -91,7 +91,7 @@ export default function Home() {
 
   const clearChat = async () => {
     try {
-      await fetch(`https://ai-chat-api-84vl.onrender.com/clear-chat`, {
+      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/clear-chat`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
@@ -115,6 +115,7 @@ export default function Home() {
           onClick={clearChat}
           className="bg-black hover:bg-gray-800 text-white px-4 py-2 rounded-xl transition"
         >
+          setChatTitles([]);
           New Chat
         </button>
       </div>
@@ -128,6 +129,11 @@ export default function Home() {
           </div >
         ))}
       </div>
+      {messages.length === 0 && !loading && (
+        <div className="text-center text-gray-500 mt-20">
+          Start a conversation 👋
+        </div>
+      )}
 
       <div className="flex-1 overflow-y-auto px-4 py-6 space-y-4 w-full max-w-6xl mx-auto">
         {messages.map((msg, index) => (
@@ -148,7 +154,7 @@ export default function Home() {
               <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce [animation-delay:0.2s]"></span>
               <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce [animation-delay:0.4s]"></span>
             </span>
-            AI is typing...
+            Thinking...
           </div>
         )}
         <div ref={bottomRef} className="h-1"></div>
@@ -162,7 +168,11 @@ export default function Home() {
             className="flex-1 border border-gray-300 p-3 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 placeholder-gray-500 resize-none"
             placeholder="Ask anything..."
             value={message}
-            onChange={(e) => setMessage(e.target.value)}
+            onChange={(e) => {
+              setMessage(e.target.value);
+              e.target.style.height = "auto";
+              e.target.style.height = e.target.scrollHeight + "px";
+            }}
             onKeyDown={(e) => {
               if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault();
@@ -178,7 +188,8 @@ export default function Home() {
               ? "bg-gray-400 cursor-not-allowed"
               : "bg-blue-600 hover:bg-blue-700"
               }`}
-            disabled={loading}
+            disabled={loading || !message.trim()}
+
           >
             {loading ? "..." : "Send"}
           </button>
