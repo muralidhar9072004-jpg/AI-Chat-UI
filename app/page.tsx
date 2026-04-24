@@ -22,7 +22,6 @@ export default function Home() {
     const loadHistory = async () => {
       try {
         const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/history/${userId}`);
-        // const res = await fetch(`http://localhost:5000/history/${userId}`); // Local Test
 
         const data = await res.json();
 
@@ -64,7 +63,6 @@ export default function Home() {
 
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/chat`, {
-      // const res = await fetch(`http://localhost:5000/chat`, { // Local Test
 
         method: "POST",
         headers: {
@@ -96,8 +94,6 @@ export default function Home() {
   const clearChat = async () => {
     try {
       await fetch(`${process.env.NEXT_PUBLIC_API_URL}/clear-chat`, {
-      // await fetch(`http://localhost:5000/clear-chat`, { // Local Test
-
         method: "POST",
         headers: {
           "Content-Type": "application/json"
