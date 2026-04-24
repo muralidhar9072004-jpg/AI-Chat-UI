@@ -61,7 +61,7 @@ export default function Home() {
     setLoading(true);
 
     try {
-      const res = await fetch(`https://ai-chat-api-84vl.onrender.com/chat${userId}`, {
+      const res = await fetch(`https://ai-chat-api-84vl.onrender.com/chat`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
@@ -91,7 +91,7 @@ export default function Home() {
 
   const clearChat = async () => {
     try {
-      await fetch(`https://ai-chat-api-84vl.onrender.com/clear-chat/${userId}`, {
+      await fetch(`https://ai-chat-api-84vl.onrender.com/clear-chat`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
