@@ -188,7 +188,6 @@ export default function Home() {
               : "bg-blue-600 hover:bg-blue-700"
               }`}
             disabled={loading || !message.trim()}
-
           >
             {loading ? "..." : "Send"}
           </button>
