@@ -22,6 +22,8 @@ export default function Home() {
     const loadHistory = async () => {
       try {
         const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/history/${userId}`);
+        // const res = await fetch(`http://localhost:5000/history/${userId}`); // Local Test
+
         const data = await res.json();
 
         const formatted = data.history.map((item: string) => {
@@ -39,7 +41,7 @@ export default function Home() {
         setMessages(formatted);
       } catch (err) {
         console.error("Failed to load history:", err);
-      }
+      } console.log("API URL:", process.env.NEXT_PUBLIC_API_URL);
     };
     loadHistory();
   }, []);
@@ -62,6 +64,8 @@ export default function Home() {
 
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/chat`, {
+      // const res = await fetch(`http://localhost:5000/chat`, { // Local Test
+
         method: "POST",
         headers: {
           "Content-Type": "application/json"
@@ -92,6 +96,8 @@ export default function Home() {
   const clearChat = async () => {
     try {
       await fetch(`${process.env.NEXT_PUBLIC_API_URL}/clear-chat`, {
+      // await fetch(`http://localhost:5000/clear-chat`, { // Local Test
+
         method: "POST",
         headers: {
           "Content-Type": "application/json"
@@ -101,6 +107,8 @@ export default function Home() {
         }),
       });
       setMessages([]);
+      setChatTitles([]);
+      setMessage("");
     } catch (err) {
       console.error("Failed to clear chat:", err);
     }
