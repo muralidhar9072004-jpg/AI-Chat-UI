@@ -15,12 +15,13 @@ export default function Home() {
       behavior: "smooth",
     });
   }, [messages, loading]);
+  const userId = "murali99";
 
   // Load history on mount
   useEffect(() => {
     const loadHistory = async () => {
       try {
-        const res = await fetch("https://ai-chat-api-84vl.onrender.com/history/murali");
+        const res = await fetch(`https://ai-chat-api-84vl.onrender.com/history/${userId}`);
         const data = await res.json();
 
         const formatted = data.history.map((item: string) => {
@@ -60,13 +61,13 @@ export default function Home() {
     setLoading(true);
 
     try {
-      const res = await fetch("https://ai-chat-api-84vl.onrender.com/chat", {
+      const res = await fetch(`https://ai-chat-api-84vl.onrender.com/chat${userId}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          userId: "murali",
+          userId,
           message: userText
         }),
       });
@@ -90,8 +91,14 @@ export default function Home() {
 
   const clearChat = async () => {
     try {
-      await fetch("https://ai-chat-api-84vl.onrender.com/clear-chat/murali", {
-        method: "DELETE"
+      await fetch(`https://ai-chat-api-84vl.onrender.com/clear-chat/${userId}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          userId
+        }),
       });
       setMessages([]);
     } catch (err) {
@@ -151,7 +158,8 @@ export default function Home() {
         <div className="max-w-6xl mx-auto flex gap-2 items-end">
 
           <textarea
-            className="flex-1 border border-gray-300 p-3 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 resize-none"
+            style={{ color: "black" }}
+            className="flex-1 border border-gray-300 p-3 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 placeholder-gray-500 resize-none"
             placeholder="Ask anything..."
             value={message}
             onChange={(e) => setMessage(e.target.value)}
@@ -162,7 +170,7 @@ export default function Home() {
               }
             }}
             rows={1}
-          ></textarea>
+          />
 
           <button
             onClick={sendMessage}
